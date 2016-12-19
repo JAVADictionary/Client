@@ -10,6 +10,9 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import java.net.*;
+import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class Display extends JFrame{
 	public String SearchWord;
@@ -18,12 +21,14 @@ public class Display extends JFrame{
 	public JButton jbtRegister = new JButton("注册");
 	public JButton jbtCardPre = new JButton("制作");
 	public JButton jbtCardCheck = new JButton("查看");
+	public JButton jbtUser=new JButton("在线");
 	private JButton jbtzan1=new JButton();
 	private JButton jbtzan2=new JButton();
 	private JButton jbtzan3=new JButton();
 	public JTextField jtfSearchWord = new JTextField(); //搜索单词
 	private static DefaultListModel<String> Friend=new DefaultListModel<String>();
-	
+	private ArrayList<String> Online=new ArrayList<>();
+	private ArrayList<String> Outline=new ArrayList<String>();
 	public JList jtaFriend = new JList(Friend); // 好友列表
 	public JScrollPane jspFriend = new JScrollPane(jtaFriend);
 	public JTextField jtfMessage = new JTextField();
@@ -86,6 +91,7 @@ public class Display extends JFrame{
 		jspf3.setBounds(60,270,210,80);
 		
 		friendHint.setBounds(300,60,80,20);
+		jbtUser.setBounds(400, 60, 60, 20 );
 		jspFriend.setBounds(300,90,160,220);
 		jtaf1.setLineWrap(true);
 		jtaf2.setLineWrap(true);
@@ -112,7 +118,7 @@ public class Display extends JFrame{
 		add(jcbjinshan);
 		add(jcbyoudao);
 		add(jcbbiying);
-		
+		add(jbtUser);
 		add(jspFriend);
 		add(friendHint);
 		add(jbtCardPre);
@@ -131,11 +137,39 @@ public class Display extends JFrame{
 		jbtzan1.addActionListener(new ZanListener1());
 		jbtzan2.addActionListener(new ZanListener2());
 		jbtzan3.addActionListener(new ZanListener3());
+		jbtUser.addActionListener(new LineListener());
 		Listener lis=new Listener();
 		Thread th=new Thread(lis);
 		th.start();
-		
 	}
+	
+	public class LineListener implements ActionListener{
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			// TODO Auto-generated method stub
+			if(isLogin){
+				String now=jbtUser.getText().trim();
+				if(now.equals("在线")){
+					jbtUser.setText("离线");
+					Friend.clear();
+					for(int i=0;i<Outline.size();i++){
+						Friend.addElement(Outline.get(i));
+					}
+				}
+				else if(now.equals("离线")){
+					jbtUser.setText("在线");
+					Friend.clear();
+					for(int i=0;i<Online.size();i++){
+						Friend.addElement(Online.get(i));
+					}
+				}
+			}
+			else{
+				jtfMessage.setText("请先登录");
+			}
+		}
+	}
+
 	public class ZanListener1 implements ActionListener{
 		@Override
 		public void actionPerformed(ActionEvent e) {
@@ -153,6 +187,7 @@ public class Display extends JFrame{
 					else {
 						output.writeUTF("bing");
 					}
+					output.flush();
 				} catch (IOException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
@@ -163,6 +198,7 @@ public class Display extends JFrame{
 			}
 		}
 	}
+	
 	public class ZanListener2 implements ActionListener{
 		@Override
 		public void actionPerformed(ActionEvent e) {
@@ -179,6 +215,7 @@ public class Display extends JFrame{
 					else {
 						output.writeUTF("bing");
 					}
+					output.flush();
 				} catch (IOException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
@@ -189,6 +226,7 @@ public class Display extends JFrame{
 			}
 		}
 	}
+	
 	public class ZanListener3 implements ActionListener{
 		@Override
 		public void actionPerformed(ActionEvent e) {
@@ -208,6 +246,7 @@ public class Display extends JFrame{
 					else {
 						output.writeUTF("bing");
 					}
+					output.flush();
 				} catch (IOException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
@@ -215,6 +254,7 @@ public class Display extends JFrame{
 			}
 		}
 	}
+	
 	public class searchListener implements ActionListener{
 		public void actionPerformed(ActionEvent e) {
 			// TODO Auto-generated method stub
@@ -226,41 +266,54 @@ public class Display extends JFrame{
 			jtaf2.setText(null);
 			jtaf3.setText(null);
 			String word=jtfSearchWord.getText().trim(); 
+			if(!word.matches("[a-zA-z]+")){
+				jtfMessage.setText("输入的内容不是单词，请重新输入");
+				jtfSearchWord.setText("");
+				return ;
+			}
 			SearchWord=word;
 			Search s=new Search();
-			if(!isLogin){
+			if(!isLogin&&!word.equals("")){
 				try {
+					String aJinshan=s.Jinshan(word);
+					String ayoudao=s.Youdao(word);
+					if(ayoudao.equals("")){
+						jtfMessage.setText("未找到释义");
+						return ;
+					}
+					String aBing=s.Bing(word);
+					
 					if(jcbjinshan.isSelected()){
 						lbf1.setText("金山");
-						jtaf1.setText(s.Jinshan(word));
+						jtaf1.setText(aJinshan);
 						if(jcbyoudao.isSelected()){
 							lbf2.setText("有道");
-							jtaf2.setText(s.Youdao(word));
+							jtaf2.setText(ayoudao);
 							if(jcbbiying.isSelected()){
 								lbf3.setText("必应");
-								jtaf3.setText(s.Bing(word));
+								jtaf3.setText(aBing);
 							}
 						}
 						else{
 							if(jcbbiying.isSelected()){
 								lbf2.setText("必应");
-								jtaf2.setText(s.Bing(word));
+								jtaf2.setText(aBing);
 							}
 						}
 					}
 					else{
 						if(jcbyoudao.isSelected()){
 							lbf1.setText("有道");
-							jtaf1.setText(s.Youdao(word));
+							jtaf1.setText(ayoudao);
 							if(jcbbiying.isSelected()){
 								lbf2.setText("必应");
-								jtaf2.setText(s.Bing(word));
+								jtaf2.setText(aBing);
 							}
 						}
 						else{
 							if(jcbbiying.isSelected()){
 								lbf1.setText("必应");
-								jtaf1.setText(s.Bing(word));
+								jtaf1.setText(aBing);
 							}
 						}
 					}
@@ -288,6 +341,13 @@ public class Display extends JFrame{
 				jbtLogin.setText("登录");
 				Friend.clear();
 				isLogin=false;
+				try {
+					output.writeUTF("logout");
+					output.flush();
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 			}
 			else{
 				Login log=new Login();
@@ -321,13 +381,17 @@ public class Display extends JFrame{
 				jtfMessage.setText("请先登陆");
 			}
 			else{
-				//newImage();
-				SeedCard card=new SeedCard();
-				card.pack();
-				card.setTitle("Card");
-				card.setSize(400,450);
-				card.setLocationRelativeTo(null);
-				card.setVisible(true);
+				if(toDraw.equals("")){
+					
+				}
+				else{
+					SeedCard card=new SeedCard();
+					card.pack();
+					card.setTitle("Card");
+					card.setSize(400,450);
+					card.setLocationRelativeTo(null);
+					card.setVisible(true);
+				}
 			}
 		}
 	}
@@ -339,6 +403,7 @@ public class Display extends JFrame{
 				jtfMessage.setText("请先登陆");
 			}
 			else if(imageList.size()>0){
+				jtfMessage.setText("");
 				Card card=new Card();
 				card.pack();
 				card.setTitle("Card");
@@ -346,11 +411,14 @@ public class Display extends JFrame{
 				card.setLocationRelativeTo(null);
 				card.setVisible(true);
 			}
+			else if(imageList.size()==0){
+				jtfMessage.setText("单词卡为空，没有好友向你发送单词卡");
+			}
 		}
 	}
 	public Image newImage(){
 		int imageWidth=300;
-		int imageHeight=280;
+		int imageHeight=300;
 		Image image = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_RGB);
 		Graphics graphics = image.getGraphics();
 		graphics.setColor(new Color(43,52,69));
@@ -362,8 +430,8 @@ public class Display extends JFrame{
 		int i=0;
 		for(;i<draw.length;i++)
 			graphics.drawString(draw[i],10, 45+i*15);
-		graphics.drawString("发件人：",10, 270);
-		graphics.drawString(userName,60, 270);
+		graphics.drawString("发件人：",10, 290);
+		graphics.drawString(userName,60, 290);
 		toDraw="";
 		return image;
 	}
@@ -389,12 +457,12 @@ public class Display extends JFrame{
 		public SeedCard(){
 			setLayout(null);
 			lable1.setIcon(new ImageIcon(img));
-			lable1.setBounds(50, 10, 300, 280);
-			lab2.setBounds(40, 300, 40, 40);
-			jta.setBounds(90, 300, 190, 40);
-			bt1.setBounds(290, 300, 80, 30);
-			bt2.setBounds(100, 360, 90, 30);
-			bt3.setBounds(210, 360, 90, 30);
+			lable1.setBounds(50, 10, 300, 300);
+			lab2.setBounds(40, 320, 40, 40);
+			jta.setBounds(90, 320, 190, 40);
+			bt1.setBounds(290, 320, 80, 30);
+			bt2.setBounds(100, 380, 90, 20);
+			bt3.setBounds(210, 380, 90, 20);
 			add(lable1);
 			add(lab2);
 			add(jta);
@@ -420,9 +488,8 @@ public class Display extends JFrame{
 					// TODO Auto-generated method stub
 					if(accepter.size()>0){
 						try {
-							output.writeUTF("card");
-							output.writeUTF(accepter.size()+"");
 							for(int i=0;i<accepter.size();i++){
+								output.writeUTF("card");
 								output.writeUTF(accepter.get(i));
 								output.writeObject(new ImageIcon(img));
 							}
@@ -510,17 +577,15 @@ public class Display extends JFrame{
 		public Card(){
 			setLayout(null);
 			lab.setIcon(imageList.get(index));
-			lab.setBounds(30, 10, 300, 280);
-			bt1.setBounds(70, 300, 100, 30);
-			bt2.setBounds(190, 300, 100, 30);
+			lab.setBounds(30, 10, 300, 300);
+			bt1.setBounds(70, 310, 100, 25);
+			bt2.setBounds(190, 310, 100, 25);
 			add(lab);
 			add(bt1);
 			add(bt2);
 			bt1.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					// TODO Auto-generated method stub
-					//加载上一个图片
 					if(index==0){
 						index=imageList.size()-1;
 						lab.setIcon(imageList.get(index));
@@ -534,8 +599,6 @@ public class Display extends JFrame{
 			bt2.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					// TODO Auto-generated method stub
-					//加载下一个图片
 					if(index==(imageList.size()-1)){
 						index=0;
 						lab.setIcon(imageList.get(index));
@@ -655,6 +718,7 @@ public class Display extends JFrame{
 		}
 	}
 	class Listener implements Runnable{
+
 		@Override
 		public void run() {
 			// TODO Auto-generated method stub
@@ -672,7 +736,17 @@ public class Display extends JFrame{
 							String number=input.readUTF();
 							int num=Integer.parseInt(number);
 							for(int i=0;i<num;i++){
-								Friend.addElement(input.readUTF());
+								String next=input.readUTF();
+								Friend.addElement(next);
+								System.out.print(next);
+								Online.add(next);
+							}
+							number=input.readUTF();
+							num=Integer.parseInt(number);
+							for(int i=0;i<num;i++){
+								String next=input.readUTF();
+								System.out.print(next);
+								Outline.add(next);
 							}
 						}
 						else{
@@ -716,13 +790,11 @@ public class Display extends JFrame{
 							}
 						}
 					}
-					else if(order.equals("like")){
-					
-					}
 					else if(order.equals("card")){
 						try {
 							ImageIcon img=(ImageIcon) input.readObject();
 							imageList.add(img);
+							jtfMessage.setText("您有新的单词卡，请注意查收！");
 						} catch (ClassNotFoundException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -752,4 +824,5 @@ public class Display extends JFrame{
 			}
 		}
 	}
+
 }

@@ -22,7 +22,7 @@ public class Search {
         if (m1.find()) {
         	String means = m1.group();
         	 String[] m2=means.split("£¨");
-             if(m2.length>=3) {
+             if(m2.length>3) {
             	String arr="";
              	String[] p=m2[3].split("\"");
              	String[] m=p[0].split(" ");
@@ -52,9 +52,6 @@ public class Search {
                 arr+=m2.group(1)+"\n";
             }
             return arr;
-        } else {
-            System.out.println("Œ¥≤È’“µΩ Õ“Â."); 
-            System.exit(0);
         }
 		return null;
 	}
@@ -88,7 +85,6 @@ public class Search {
             	}
             	arr=arr+"\n";
             }
-           
            return arr;
         }
         
